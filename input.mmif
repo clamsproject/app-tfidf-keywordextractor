@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "mmif": "http://mmif.clams.ai/1.0.4"
+  },
+  "documents": [
+    {
+      "@type": "http://mmif.clams.ai/vocabulary/TextDocument/v1",
+      "properties": {
+        "mime": "text",
+        "id": "d1",
+        "location": "file:///Users/selenasong/Desktop/CLAMS/tfidf-kw-detection/200304.newshour-transcript-casey/cpb-aacip_507-0c4sj1b43r.txt"
+      }
+    }
+  ],
+  "views": []
+}
