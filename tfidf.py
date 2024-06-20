@@ -3,11 +3,6 @@ import argparse
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 import pickle as pkl
-import pandas as pd
-
-# data_path = '/Users/selenasong/Desktop/CLAMS/tfidf-kw-detection/200304.newshour-transcript-casey'
-# tfidf_pkl_path = '/tfidf-kw-detection/app-tfidf-keyword-detector/tfidf_vectors.pkl'
-# features_path = '/tfidf-kw-detection/app-tfidf-keyword-detector/features.pkl'
 
 def find_problematic_files(directory):
     """
@@ -150,9 +145,9 @@ def print_results(idx,keywords):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", action='store', help="path to the directory of all text files for generating idf scores ")
-    parser.add_argument("--output_idf_file_name", action='store', help="file name of the idf vectors")
-    parser.add_argument("--output_feature_file_name", action='store', help="file name of the features")
-    parser.add_argument("--max_df", action='store', type=float, default=0.85, help="maximum document frequency")
+    parser.add_argument("--output_idf_file_name", action='store', default='idf_file.pkl', help='file name of the idf vectors. If nothing is passed in, the file in the current directory named as "idf_file.pkl" is used')
+    parser.add_argument("--output_feature_file_name", action='store', default='feature_dict_file.pkl', help='file name of the features, If nothing is passed in, the file in the current directory named as "feature_dict_file.pkl" is used')
+    parser.add_argument("--max_df", action='store', type=float, default=0.85, help='maximum document frequency. Default value is 0.85.')
     parsed_args = parser.parse_args()
     docs, files = lists_generator(parsed_args.data_path)
     cv = CountVectorizer(max_df=parsed_args.max_df, stop_words='english')

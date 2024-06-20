@@ -1,2 +1,5 @@
 # Make sure clams-python version is explicitly specified, at least the lower bound
-clams-python==1.2.2
+clams-python==1.2.4
+scikit-learn==1.5.0
+lapps==0.0.2
+mmif-python==1.0.16

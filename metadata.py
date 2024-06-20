@@ -1,5 +1,5 @@
 """
-The purpose of this file is to define the metadata of the app with minimal imports. 
+The purpose of this file is to define the metadata of the app with minimal imports.
 
 DO NOT CHANGE the name of the file
 """
@@ -11,12 +11,12 @@ from clams.appmetadata import AppMetadata
 from lapps.discriminators import Uri
 
 
-# DO NOT CHANGE the function name 
+# DO NOT CHANGE the function name
 def appmetadata() -> AppMetadata:
     """
     Function to set app-metadata values and return it as an ``AppMetadata`` obj.
     Read these documentations before changing the code below
-    - https://sdk.clams.ai/appmetadata.html metadata specification. 
+    - https://sdk.clams.ai/appmetadata.html metadata specification.
     - https://sdk.clams.ai/autodoc/clams.appmetadata.html python API
     
     :return: AppMetadata object holding all necessary information.
@@ -24,14 +24,14 @@ def appmetadata() -> AppMetadata:
     
     # first set up some basic information
     metadata = AppMetadata(
-        name="Tfidf Keyword Detector",
-        description="",  # briefly describe what the purpose and features of the app
+        name="Tfidf Keywordextractor",
+        description="extract keywords of a text document according to TF-IDF values. IDF values and all features come from related pickle files in the current directory.",  # briefly describe what the purpose and features of the app
         app_license="Apache 2.0",  # short name for a software license like MIT, Apache2, GPL, etc.
-        identifier="tfidf-keyword-detector",  # should be a single string without whitespaces. If you don't intent to publish this app to the CLAMS app-directory, please use a full IRI format. 
-        url="https://github.com/clamsproject/app-tfidf-keyword-detector",  # a website where the source code and full documentation of the app is hosted
-        # (if you are on the CLAMS team, this MUST be "https://github.com/clamsproject/app-tfidf-keyword-detector"
+        identifier="tfidf-keywordextractor",  # should be a single string without whitespaces. If you don't intent to publish this app to the CLAMS app-directory, please use a full IRI format.
+        url="https://github.com/clamsproject/app-tfidf-keywordextractor",  # a website where the source code and full documentation of the app is hosted
+        # (if you are on the CLAMS team, this MUST be "https://github.com/clamsproject/app-tfidf-keywordextractor"
         # (see ``.github/README.md`` file in this directory for the reason)
-        analyzer_version='version_0.0.1', # use this IF THIS APP IS A WRAPPER of an existing computational analysis algorithm
+        analyzer_version='', # use this IF THIS APP IS A WRAPPER of an existing computational analysis algorithm
         # (it is very important to pinpoint the primary analyzer version for reproducibility)
         # (for example, when the app's implementation uses ``torch``, it doesn't make the app a "torch-wrapper")
         # (but, when the app doesn't implementaion any additional algorithms/model/architecture, but simply use API's of existing, for exmaple, OCR software, it is a wrapper)
@@ -46,10 +46,19 @@ def appmetadata() -> AppMetadata:
     metadata.add_output(AnnotationTypes.Alignment)
     metadata.add_output(Uri.TEXT)
 
-    # (optional) and finally add runtime parameter specifications
-    # metadata.add_parameter(name='a_param', description='example parameter description',
-    #                        type='boolean', default='false')
-    # metadta.add_parameter(more...)
+    metadata.add_parameter(name='idf_file',
+                           description='path to the file storing all idf values. If nothing is passed in, the file in the current directory named as "idf_file.pkl" is used',
+                           type='string',
+                           default='idf_file.pkl')
+
+    metadata.add_parameter(name='feature_dict_file',
+                           description='path to the file storing the feature dict. If nothing is passed in, the file in the current directory named as "feature_dict_file.pkl" is used',
+                           type='string',
+                           default='feature_dict_file.pkl')
+    metadata.add_parameter(name='topn',
+                           description='top n keywords to extract from the current textfile. If nothing is passed in, the value for n will be 10',
+                           type='integer',
+                           default=10)
     
     # CHANGE this line and make sure return the compiled `metadata` instance
     return metadata

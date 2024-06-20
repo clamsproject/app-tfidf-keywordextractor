@@ -6,7 +6,7 @@ app.py Template
 The app.py script does several things:
 - import the necessary code
 - create a subclass of ClamsApp that defines the metadata and provides a method to run the wrapped NLP tool
-- provide a way to run the code as a RESTful Flask service 
+- provide a way to run the code as a RESTful Flask service
 
 
 """
@@ -29,24 +29,15 @@ from lapps.discriminators import Uri
 # Import functions from tfidf.py
 from tfidf import sort_coo, extract_topn_from_vector, get_keywords
 
+class TfidfKeywordextractor(ClamsApp):
 
-class TfidfKeywordDetector(ClamsApp):
-
-    def __init__(self, idf_file, feature_file, topn):
+    def __init__(self):
         super().__init__()
-        # self.topn = 10
-        # self.idf_file = "/Users/selenasong/Desktop/CLAMS/tfidf-kw-detection/tfidf_vectors.pkl"
-        # self.feature_dict_file = "/Users/selenasong/Desktop/CLAMS/tfidf-kw-detection/features.pkl"
-
-        self.topn = topn
-        self.idf_file = idf_file
-        self.feature_dict_file = feature_file
-
 
     def _appmetadata(self):
         # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._load_appmetadata
-        # Also check out ``metadata.py`` in this directory. 
-        # When using the ``metadata.py`` leave this do-nothing "pass" method here. 
+        # Also check out ``metadata.py`` in this directory.
+        # When using the ``metadata.py`` leave this do-nothing "pass" method here.
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
@@ -62,9 +53,12 @@ class TfidfKeywordDetector(ClamsApp):
 
         # process the text documents in the documents list
         for doc in self.mmif.get_documents_by_type(DocumentTypes.TextDocument):
+            idf_file = parameters['idf_file']
+            feature_dict_file = parameters['feature_dict_file']
+            topn = parameters['topn']
             new_view = self._new_view(parameters, doc.id)
             # _run_nlp_tool() is the method that does the actual work
-            self._run_nlp_tool(doc, new_view, doc.id, self.idf_file, self.feature_dict_file)
+            self._run_nlp_tool(doc, new_view, doc.id, idf_file, feature_dict_file, topn)
         # return the MMIF object
         return self.mmif
 
@@ -80,7 +74,7 @@ class TfidfKeywordDetector(ClamsApp):
         view.new_contain(AnnotationTypes.Alignment)
         return view
 
-    def _run_nlp_tool(self, doc, new_view, full_doc_id, idf_file, feature_dict_file):
+    def _run_nlp_tool(self, doc, new_view, full_doc_id, idf_file, feature_dict_file, topn):
         """Run the NLP tool over the document and add annotations to the view, using the
         full document identifier (which may include a view identifier) for the document
         property."""
@@ -103,33 +97,41 @@ class TfidfKeywordDetector(ClamsApp):
         feature_names = feature_dict
 
         # get keywords for the document
-        keywords = get_keywords(text, feature_names, self.topn, tfidf_transformer, cv)
+        keywords = get_keywords(text, feature_names, topn, tfidf_transformer, cv)
 
         # create the document to store the keywords
         keywords_doc = new_view.new_textdocument(text=keywords)
 
-        a = new_view.new_annotation(Uri.TEXT)
+        a = new_view.new_annotation(AnnotationTypes.Alignment, source=full_doc_id, target=keywords_doc.id)
 
         a.add_property('document', full_doc_id)
         a.add_property('keywords_file', keywords_doc.id)
 
-        # align the original text file and the keywords file
-        new_view.new_annotation(AnnotationTypes.Alignment, source=full_doc_id, target=keywords_doc.id)
+
+def get_app():
+    """
+    This function effectively creates an instance of the app class, without any arguments passed in, meaning, any
+    external information such as initial app configuration should be set without using function arguments. The easiest
+    way to do this is to set global variables before calling this.
+    """
+    # for example:
+    # return TfidfKeywordextractor(create, from, global, params)
+    return TfidfKeywordextractor()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", action="store", default="5000", help="set port to listen")
     parser.add_argument("--production", action="store_true", help="run gunicorn server")
-    parser.add_argument("--idf_file", action="store", help="path to idf file")
-    parser.add_argument("--feature_dict_file", action="store", help="path to feature dict file")
-    parser.add_argument("--topn", action="store", type=int, default=10, help="top n keywords to return ")
     # add more arguments as needed
+    # parser.add_argument(more_arg...)
 
     parsed_args = parser.parse_args()
 
     # create the app instance
-    app = TfidfKeywordDetector(parsed_args.idf_file, parsed_args.feature_dict_file, parsed_args.topn)
+    # if get_app() call requires any "configurations", they should be set now as global variables
+    # and referenced in the get_app() function. NOTE THAT you should not change the signature of get_app()
+    app = get_app()
 
     http_app = Restifier(app, port=int(parsed_args.port))
     # for running the application in production mode
