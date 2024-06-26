@@ -44,18 +44,13 @@ def appmetadata() -> AppMetadata:
     metadata.add_input(DocumentTypes.TextDocument)
     metadata.add_output(DocumentTypes.TextDocument)
     metadata.add_output(AnnotationTypes.Alignment)
-    metadata.add_output(Uri.TEXT)
 
-    metadata.add_parameter(name='idf_file',
-                           description='path to the file storing all idf values. If nothing is passed in, the file in the current directory named as "idf_file.pkl" is used',
+    metadata.add_parameter(name='idfFeatureFile',
+                           description='path to the file storing all idf values. If nothing is passed in, the file in the current directory named as "idf_feature_file.pkl" is used',
                            type='string',
-                           default='idf_file.pkl')
+                           default='idf_feature_file.pkl')
 
-    metadata.add_parameter(name='feature_dict_file',
-                           description='path to the file storing the feature dict. If nothing is passed in, the file in the current directory named as "feature_dict_file.pkl" is used',
-                           type='string',
-                           default='feature_dict_file.pkl')
-    metadata.add_parameter(name='topn',
+    metadata.add_parameter(name='topN',
                            description='top n keywords to extract from the current textfile. If nothing is passed in, the value for n will be 10',
                            type='integer',
                            default=10)

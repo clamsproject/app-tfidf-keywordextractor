@@ -37,39 +37,15 @@ def lists_generator(directory):
     Put all texts into one list
     """
     all_text_list = []
-    all_files_list = os.listdir(directory)
-    for txt_file in all_files_list:
+    for txt_file in os.listdir(directory):
         txt_file_path = os.path.join(directory, txt_file)
         if txt_file_path.endswith('.txt'):
             with open(txt_file_path, 'r') as f:
                 lines = f.read().strip()
                 all_text_list.append(lines)
 
-    return all_text_list, all_files_list
+    return all_text_list
 
-# docs, files = lists_generator(data_path)
-
-# Creating the IDF
-# CountVectorizer to create a vocabulary and generate word counts
-#create a vocabulary of words,
-#ignore words that appear in 85% of documents,
-#eliminate stop words
-
-# cv = CountVectorizer(max_df=0.85, stop_words='english')
-# word_count_vector = cv.fit_transform(docs)
-
-# TfidfTransformer to Compute Inverse Document Frequency (IDF)
-# tfidf_transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
-# tfidf_transformer.fit(word_count_vector)
-# feature_names = cv.get_feature_names_out()
-
-# with open(tfidf_pkl_path, 'wb') as f:
-#     pkl.dump(tfidf_transformer.idf_, f)
-#
-# with open(features_path, 'wb') as file:
-#     pkl.dump(feature_names, file)
-
-# Computing Tf-IDF and Extracting Keywords
 def sort_coo(coo_matrix):
     tuples = zip(coo_matrix.col, coo_matrix.data)
     return sorted(tuples, key=lambda x: (x[1], x[0]), reverse=True)
@@ -116,49 +92,21 @@ def print_results(idx,keywords):
     print("\n===Keywords===")
     for k in keywords:
         print(k, keywords[k])
-#
-# idx=0
-# keywords = get_keywords(docs[idx], feature_names, 10, tfidf_transformer)
-# print_results(idx,keywords)
-
-
-# Generate keywords for a batch of documents
-#generate tf-idf for all documents in your list. docs_test has 500 documents
-# tf_idf_vector = tfidf_transformer.transform(cv.transform(docs))
-#
-# results = []
-# for i in range(tf_idf_vector.shape[0]):
-#     # get vector for a single document
-#     curr_vector = tf_idf_vector[i]
-#
-#     # sort the tf-idf vector by descending order of scores
-#     sorted_items = sort_coo(curr_vector.tocoo())
-#
-#     # extract only the top n; n here is 10
-#     keywords = extract_topn_from_vector(feature_names, sorted_items, 10)
-#
-#     results.append(keywords)
-#
-# df = pd.DataFrame(zip(docs, results),columns=['doc', 'keywords'])
-# print(df[:1000])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", action='store', help="path to the directory of all text files for generating idf scores ")
-    parser.add_argument("--output_idf_file_name", action='store', default='idf_file.pkl', help='file name of the idf vectors. If nothing is passed in, the file in the current directory named as "idf_file.pkl" is used')
-    parser.add_argument("--output_feature_file_name", action='store', default='feature_dict_file.pkl', help='file name of the features, If nothing is passed in, the file in the current directory named as "feature_dict_file.pkl" is used')
-    parser.add_argument("--max_df", action='store', type=float, default=0.85, help='maximum document frequency. Default value is 0.85.')
+    parser.add_argument("--dataPath", action='store', help="path to the directory of all text files for generating idf scores ")
+    parser.add_argument("--idfFeatureFile", action='store', default='idf_feature_file.pkl', help='file name of the idf vectors. If nothing is passed in, the file in the current directory named as "idf_feature_file.pkl" is used')
+    parser.add_argument("--maxDf", action='store', type=float, default=0.85, help='maximum document frequency. Default value is 0.85. Max value is 1.0')
     parsed_args = parser.parse_args()
-    docs, files = lists_generator(parsed_args.data_path)
+    docs = lists_generator(parsed_args.data_path)
     cv = CountVectorizer(max_df=parsed_args.max_df, stop_words='english')
     word_count_vector = cv.fit_transform(docs)
     tfidf_transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
     tfidf_transformer.fit(word_count_vector)
     feature_names = cv.get_feature_names_out()
+    idf_feature_values = {"idf_values": tfidf_transformer.idf_, "feature_dict": feature_names}
 
-    with open(parsed_args.output_idf_file_name, 'wb') as f:
-        pkl.dump(tfidf_transformer.idf_, f)
-
-    with open(parsed_args.output_feature_file_name, 'wb') as file:
-        pkl.dump(feature_names, file)
+    with open(parsed_args.idfFeatureFile, 'wb') as f:
+        pkl.dump(idf_feature_values, f)
 

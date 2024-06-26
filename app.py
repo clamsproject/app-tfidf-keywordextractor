@@ -18,16 +18,13 @@ import logging
 # Non-NLP Clams applications will require AnnotationTypes
 
 from clams import ClamsApp, Restifier
-from mmif import Mmif, View, Annotation, Document, AnnotationTypes, DocumentTypes
+from mmif import Mmif, AnnotationTypes, DocumentTypes
 import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 
-# For an NLP tool we need to import the LAPPS vocabulary items
-from lapps.discriminators import Uri
-
 # Import functions from tfidf.py
-from tfidf import sort_coo, extract_topn_from_vector, get_keywords
+from tfidf import get_keywords
 
 class TfidfKeywordextractor(ClamsApp):
 
@@ -41,28 +38,20 @@ class TfidfKeywordextractor(ClamsApp):
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
-        # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._annotate
-        for arg, val in parameters.items():
-            print("Parameter %s=%s" % (arg, val))
-            # as we defined this `error` parameter in the app metadata
-            if arg == 'error' and val is True:
-                raise Exception("Exception - %s" % parameters['error'])
-
         # Initialize the MMIF object from the string if needed
         self.mmif = mmif if type(mmif) is Mmif else Mmif(mmif)
 
         # process the text documents in the documents list
         for doc in self.mmif.get_documents_by_type(DocumentTypes.TextDocument):
-            idf_file = parameters['idf_file']
-            feature_dict_file = parameters['feature_dict_file']
-            topn = parameters['topn']
-            new_view = self._new_view(parameters, doc.id)
+            idf_feature_file = parameters['idfFeatureFile']
+            topn = parameters['topN']
+            new_view = self._new_view(parameters)
             # _run_nlp_tool() is the method that does the actual work
-            self._run_nlp_tool(doc, new_view, doc.id, idf_file, feature_dict_file, topn)
+            self._keyword_extractor(doc, new_view, doc.long_id, idf_feature_file, topn)
         # return the MMIF object
         return self.mmif
 
-    def _new_view(self, runtime_config, docid=None):
+    def _new_view(self, runtime_config):
         view = self.mmif.new_view()
         view.metadata.app = self.metadata.identifier
         # first thing you need to do after creating a new view is "sign" the view
@@ -70,42 +59,43 @@ class TfidfKeywordextractor(ClamsApp):
         # as well as the user parameter inputs. This is important for reproducibility.
         self.sign_view(view, runtime_config)
         # then record what annotations you want to create in this view
-        # view.new_contain(Uri.DOCUMENT, document=docid)
+        view.new_contain(DocumentTypes.TextDocument)
         view.new_contain(AnnotationTypes.Alignment)
         return view
 
-    def _run_nlp_tool(self, doc, new_view, full_doc_id, idf_file, feature_dict_file, topn):
+    def _keyword_extractor(self, doc, new_view, full_doc_id, idf_feature_file, topn):
         """Run the NLP tool over the document and add annotations to the view, using the
         full document identifier (which may include a view identifier) for the document
         property."""
         text = doc.text_value
 
         # load idf values
-        with open(idf_file, 'rb') as f:
-            idf_values = pickle.load(f)
-
-        # load feature dict
-        with open(feature_dict_file, 'rb') as file:
-            feature_dict = pickle.load(file)
+        with open(idf_feature_file, 'rb') as f:
+            idf_feature_values = pickle.load(f)
+            idf_values = idf_feature_values["idf_values"]
+            feature_dict = idf_feature_values["feature_dict"]
 
         # restore the values
         cv = CountVectorizer(vocabulary=feature_dict)
         tfidf_transformer = TfidfTransformer()
         tfidf_transformer.idf_ = idf_values
 
-        # get the feature names out into a list
-        feature_names = feature_dict
-
         # get keywords for the document
-        keywords = get_keywords(text, feature_names, topn, tfidf_transformer, cv)
+        keywords_dict = get_keywords(text, feature_dict, topn, tfidf_transformer, cv)
+        keywords = ""
+        tfidf_values = ""
+        for keyword, tfidf_value in keywords_dict.items():
+            keywords += keyword + " "
+            tfidf_values += str(tfidf_value) + " "
 
         # create the document to store the keywords
-        keywords_doc = new_view.new_textdocument(text=keywords)
+        keywords_doc = new_view.new_textdocument(text=keywords.strip())
+        keywords_doc.add_property('scores', tfidf_values.strip())
 
-        a = new_view.new_annotation(AnnotationTypes.Alignment, source=full_doc_id, target=keywords_doc.id)
+        a = new_view.new_annotation(AnnotationTypes.Alignment, source=full_doc_id, target=keywords_doc.long_id)
 
         a.add_property('document', full_doc_id)
-        a.add_property('keywords_file', keywords_doc.id)
+        a.add_property('keywords_file', keywords_doc.long_id)
 
 
 def get_app():
