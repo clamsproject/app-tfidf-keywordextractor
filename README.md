@@ -1,66 +1,50 @@
-# TO_DEVS: BURN AFTER READING
 
-Delete this section of the document once the app development is done, before publishing the repository.
-
----
-This skeleton code is a scaffolding for Python-based CLAMS app development. Specifically, it contains
-
-1. `app.py` and `metadata.py` to write the app
-1. `requirements.txt` to specify python dependencies
-1. `Containerfile` to containerize the app and specify system dependencies
-1. `.gitignore` and `.dockerignore` files listing commonly ignored files
-1. an empty `LICENSE` file to replace with an actual license information of the app
-1. This `README.md` file for additional information not specified in the general user manual at https://apps.clams.ai/clamsapp
-1. A number of GitHub Actions workflows for issue/bugreport management
-1. A GHA workflow to publish app images upon any push of a git tag
-   * **NOTE**: All GHA workflows included are designed to only work in repositories under `clamsproject` organization.
-
-Before pushing your first commit, please make sure to delete this section of the document.
-
-Then use the following section to document any additional information specific to this app. If your app works significantly different from what's described in the generic readme file, be as specific as possible.
-
-
-> **warning**
-> TO_DEVS: Delete these `TO_DEVS` notes and warnings before publishing the repository.
-
----
-
-# Tfidf Keywordextractor Upgrade
-
-> **warning**
-> TO_DEVS: Again, delete these `TO_DEVS` notes and warnings before publishing the repository.
+# TFIDF Keyword Extractor 
 
 ## Description
 
-> **note**
-> TO_DEVS: A brief description of the app, expected behavior, underlying software/library/technology, etc.
+This app extracts keywords in a text document according to tokens' TF-IDF scores. The IDF scores are generated from 
+a given list of text files in a directory.
 
 ## User instruction
+### System requirements
+* Requires Python3 with `clams-python`, and `scikit-learn` to run the app locally.
+* Requires an HTTP client utility (such as `curl`) to invoke and execute analysis.
+* Requires docker to run the app in a Docker container 
+
+Run `pip install -r requirements.txt` to install the requirements.
+
+### Generate IDF scores for tokens in text documents in a directory 
+After getting into the working directory, run the following line on the target dataset:
+
+`python tfidf.py --dataPath path/to/target/dataset/directory`
+
+By running this line, tfidf.py generates a pickle file named `idf_feature_file.pkl` by default that stores the IDF values
+and the corresponding feature dictionary for the use of later keyword extraction. 
+
+If these files need to be named differently from the default, then add `--idfFeatureFile` and the expected
+file name to the command above to change the names of the generated files. 
+
+> **warning:**
+> renaming files at this step will affect the command for running the keyword extractor in the later step 
+
+Default value for max document frequency is 0.85. If a different value for is required, then add `--maxDf` 
+and the expected float value (max value is 1.0) to the command above. 
+
+### Extract keywords using TF-IDF values
 
 General user instructions for CLAMS apps are available at [CLAMS Apps documentation](https://apps.clams.ai/clamsapp).
 
-Below is a list of additional information specific to this app.
+> **note:**
+> If the file storing the IDF values and the feature dict do not have the default file name as listed above, 
+> then when running `cli.py`according to the Apps documentation, before entering input and output `mmif` files, 
+> add `--idfFeatureFile` and the corresponding file name 
 
-> **note**
-> TO_DEVS: Below is a list of additional information specific to this app.
-
-
-### System requirements
-
-> **note**
-> TO_DEVS: Any system-level software required to run this app. Usually include some of the following:
-> * supported OS and CPU architectures
-> * usage of GPU
-> * system package names (e.g. `ffmpeg`, `libav`, `libopencv-dev`, etc.)
-> * some example code snippet to install them on Debian/Ubuntu (because our base images are based on Debian)
->     * e.g. `apt-get update && apt-get install -y <package-name>`
+Default number of keywords extracted from a given text document is 10. If this number
+is required to be different, when running `cli.py`, add `--topN` and a corresponding integer value
 
 ### Configurable runtime parameter
 
-For the full list of parameters, please refer to the app metadata from the [CLAMS App Directory](https://apps.clams.ai) or the [`metadata.py`](metadata.py) file in this repository.
+For the full list of parameters, please refer to the app metadata from the [CLAMS App Directory](https://apps.clams.ai) 
+or the [`metadata.py`](metadata.py) file in this repository.
 
-> **warning**
-> TO_DEVS: If you're not developing this app for publishing on the CLAMS App Directory, the above paragraph is not applicable. Feel free to delete or change it.
-
-> **note**
-> TO_DEVS: all runtime parameters are supported to be VERY METICULOUSLY documented in the app's `metadata.py` file. However for some reason, if you need to use this space to elaborate what's already documented in `metadata.py`, feel free to do so.
