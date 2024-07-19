@@ -1,3 +1,4 @@
 # Make sure clams-python version is explicitly specified, at least the lower bound
-clams-python==1.2.4
-scikit-learn~=1.1.0
+clams-python==1.2.6
+scikit-learn>=1.1.0
+clams-utils
