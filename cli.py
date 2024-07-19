@@ -61,11 +61,7 @@ def metadata_to_argparser(app_metadata: AppMetadata) -> argparse.ArgumentParser:
                         help='output MMIF file path, or STDOUT if `-` or not provided. NOTE: When this is set to '
                              'STDOUT, any print statements in the app code will be redirected to stderr.',
                         default=sys.stdout)
-    # parser.add_argument('--idf_file', type=argparse.FileType('r'),
-    #                     help='input pickle file that stores all idf values. ')
-    # parser.add_argument('--feature_dict_file', type=argparse.FileType('r'),
-    #                     help='input pickle file that stores the feature dict. ')
-    # parser.add_argument('--top', type=int, default=10, help='number of top results to return')
+
     return parser
 
 

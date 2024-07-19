@@ -3,46 +3,20 @@ import argparse
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 import pickle as pkl
+from clams_utils.aapb.newshour_transcript_cleanup import file_cleaner
 
-def find_problematic_files(directory):
+def read_newshour_transcript(newshour_transcripts_directory):
     """
-    Find all files that are either mmif style annotation or whose status is '404 not found'
-    These files are in JSON style, so this function is to record any file that contains '{'
-    Helper function for delete_problematic_files.
-    """
-    problematic_files = []
-    for file in os.listdir(directory):
-        file_path = os.path.join(directory, file)
-        if file_path.endswith('.txt'):
-            with open(file_path, 'r') as f:
-                text = f.read()
-                if "{" in text:
-                    problematic_files.append(file_path)
-
-    return problematic_files
-
-def delete_problematic_files(directory):
-    """
-    Delete all the problematic files
-    """
-    list_of_problematic_files = find_problematic_files(directory)
-    for file in list_of_problematic_files:
-        os.remove(file)
-
-    # Double check whether there is other problematic files
-    return find_problematic_files(directory)
-
-def lists_generator(directory):
-    """
-    Put all texts into one list
+    Given a directory of NewsHour transcripts,
+    return a list that contains all the cleaned transcripts for later model training
     """
     all_text_list = []
-    for txt_file in os.listdir(directory):
-        txt_file_path = os.path.join(directory, txt_file)
+    for txt_file in os.listdir(newshour_transcripts_directory):
+        txt_file_path = os.path.join(newshour_transcripts_directory, txt_file)
         if txt_file_path.endswith('.txt'):
-            with open(txt_file_path, 'r') as f:
-                lines = f.read().strip()
-                all_text_list.append(lines)
+            cleaned_lines = file_cleaner(txt_file_path)
+            if cleaned_lines != None:
+                all_text_list.append(cleaned_lines)
 
     return all_text_list
 
@@ -85,21 +59,18 @@ def get_keywords(doc, feature_names, topn, tfidf_transformer, cv):
 
     return keywords
 
-def print_results(idx,keywords):
-    # now print the results
-    print("\n=====Text=====")
-    print(docs[idx])
-    print("\n===Keywords===")
-    for k in keywords:
-        print(k, keywords[k])
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataPath", action='store', help="path to the directory of all text files for generating idf scores ")
-    parser.add_argument("--idfFeatureFile", action='store', default='idf_feature_file.pkl', help='file name of the idf vectors. If nothing is passed in, the file in the current directory named as "idf_feature_file.pkl" is used')
-    parser.add_argument("--maxDf", action='store', type=float, default=0.85, help='maximum document frequency. Default value is 0.85. Max value is 1.0')
+    parser.add_argument("--dataPath", action='store',
+                        help='path to the directory of all transcripts used for generating idf scores.')
+    # TODO: comment this argument back after the modelName parameter in metadata.py is solved
+    # parser.add_argument("--idfFeatureFile", action='store', default='idf_feature_file.pkl',
+    #                     help='file name of the idf vectors. If nothing is passed in, the file in the current directory '
+    #                          'named as "idf_feature_file.pkl" is used')
+    parser.add_argument("--maxDf", action='store', type=float, default=0.85,
+                        help='maximum document frequency. Default value is 0.85. Max value is 1.0')
     parsed_args = parser.parse_args()
-    docs = lists_generator(parsed_args.dataPath)
+    docs = read_newshour_transcript(parsed_args.dataPath)
     cv = CountVectorizer(max_df=parsed_args.maxDf, stop_words='english')
     word_count_vector = cv.fit_transform(docs)
     tfidf_transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
@@ -107,6 +78,7 @@ if __name__ == "__main__":
     feature_names = cv.get_feature_names_out()
     idf_feature_values = {"idf_values": tfidf_transformer.idf_, "feature_dict": feature_names}
 
-    with open(parsed_args.idfFeatureFile, 'wb') as f:
+    # TODO: change the pickle file to read after the argument is commented back
+    with open('./idf_feature_file.pkl', 'wb') as f:
         pkl.dump(idf_feature_values, f)
 

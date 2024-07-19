@@ -8,8 +8,6 @@ from mmif import DocumentTypes, AnnotationTypes
 
 from clams.app import ClamsApp
 from clams.appmetadata import AppMetadata
-from lapps.discriminators import Uri
-
 
 # DO NOT CHANGE the function name
 def appmetadata() -> AppMetadata:
@@ -25,7 +23,9 @@ def appmetadata() -> AppMetadata:
     # first set up some basic information
     metadata = AppMetadata(
         name="Tfidf Keywordextractor",
-        description="extract keywords of a text document according to TF-IDF values. IDF values and all features come from related pickle files in the current directory.",  # briefly describe what the purpose and features of the app
+        description="extract keywords of a text document according to TF-IDF values. "
+                    "IDF values and all features come from related pickle files in the current directory."
+                    "App can either take a simple text document or take a MMIF file generated from the text slicer app.",  # briefly describe what the purpose and features of the app
         app_license="Apache 2.0",  # short name for a software license like MIT, Apache2, GPL, etc.
         identifier="tfidf-keywordextractor",  # should be a single string without whitespaces. If you don't intent to publish this app to the CLAMS app-directory, please use a full IRI format.
         url="https://github.com/clamsproject/app-tfidf-keywordextractor",  # a website where the source code and full documentation of the app is hosted
@@ -42,20 +42,25 @@ def appmetadata() -> AppMetadata:
     )
     # and then add I/O specifications: an app must have at least one input and one output
     metadata.add_input(DocumentTypes.TextDocument)
-    metadata.add_output(DocumentTypes.TextDocument)
+    # add an output property of "scores" to store keywords' tfidf values
+    metadata.add_output(DocumentTypes.TextDocument, text="keywords", scores="tfidf scores").add_description(
+        "Default property 'text' stores the extracted keywords (string). Added property 'scores' stores keywords' TF-IDF values (float).")
     metadata.add_output(AnnotationTypes.Alignment)
 
-    metadata.add_parameter(name='idfFeatureFile',
-                           description='path to the file storing all idf values. If nothing is passed in, the file in the current directory named as "idf_feature_file.pkl" is used',
-                           type='string',
-                           default='idf_feature_file.pkl')
+
+    # TODO: rename the parameter so it applies to more models and gives the user a clearer instruction on what to pass in
+    # TODO: once this is solved, go to tfidf.py and app.py to solve TODOs there
+    # metadata.add_parameter(name='modelName',
+    #                        description='path to the file storing the model.',
+    #                        type='string',
+    #                        choices=['idf_feature_file.pkl'],
+    #                        default='idf_feature_file.pkl')
 
     metadata.add_parameter(name='topN',
-                           description='top n keywords to extract from the current textfile. If nothing is passed in, the value for n will be 10',
+                           description='top n keywords to extract from the current textfile.',
                            type='integer',
                            default=10)
-    
-    # CHANGE this line and make sure return the compiled `metadata` instance
+
     return metadata
 
 
